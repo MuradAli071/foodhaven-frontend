@@ -108,12 +108,15 @@ function AdminDashboard({ addToCart }) {
 
   const uploadImage = async () => {
     if (!imageFile) return formData.imageUrl || '';
-    const form = new FormData();
-    form.append('image', imageFile);
-    const response = await api.post('/menu/upload', form, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('foodhavenToken')}` },
-    });
-    return response.data.imageUrl;
+    try {
+      const form = new FormData();
+      form.append('image', imageFile);
+      const response = await api.post('/menu/upload', form);
+      return response.data.imageUrl;
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      throw new Error(error.response?.data?.message || 'Failed to upload image.');
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -126,17 +129,21 @@ function AdminDashboard({ addToCart }) {
       setLoading(true);
       const imageUrl = await uploadImage();
       const payload = { ...formData, price: Number(formData.price), imageUrl };
+      
+      console.log('Saving item with payload:', payload);
+
       if (editingId) {
         await api.put(`/menu/${editingId}`, payload);
         setMessage('✅ Menu item updated.');
       } else {
         await api.post('/menu', payload);
-        setMessage('✅ Menu item added.');
+        setMessage('✅ Menu item added successfully.');
       }
       resetForm();
       await refreshAdminData();
     } catch (error) {
-      setMessage(error.response?.data?.message || '❌ Save failed.');
+      console.error('Submit item error:', error);
+      setMessage(error.response?.data?.message || error.message || '❌ Save failed. Check console for details.');
     } finally { setLoading(false); }
   };
 
