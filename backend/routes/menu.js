@@ -28,15 +28,28 @@ router.post('/upload', authMiddleware, adminMiddleware, upload.single('image'), 
 });
 
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
-  const { title, description, price, category, imageUrl, available } = req.body;
-  const item = await MenuItem.create({ title, description, price, category, imageUrl, available });
-  res.status(201).json(item);
+  try {
+    const { title, description, price, category, imageUrl, available } = req.body;
+    if (!title || !price) {
+      return res.status(400).json({ message: 'Title and price are required' });
+    }
+    const item = await MenuItem.create({ title, description, price, category, imageUrl, available });
+    res.status(201).json(item);
+  } catch (error) {
+    console.error('Create menu item error:', error);
+    res.status(500).json({ message: 'Failed to create menu item. Please try again.' });
+  }
 });
 
 router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
-  const item = await MenuItem.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  if (!item) return res.status(404).json({ message: 'Menu item not found' });
-  res.json(item);
+  try {
+    const item = await MenuItem.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!item) return res.status(404).json({ message: 'Menu item not found' });
+    res.json(item);
+  } catch (error) {
+    console.error('Update menu item error:', error);
+    res.status(500).json({ message: 'Failed to update menu item.' });
+  }
 });
 
 router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {

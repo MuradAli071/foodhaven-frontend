@@ -45,7 +45,38 @@ function App() {
 
   useEffect(() => {
     try { localStorage.setItem('foodhavenCart', JSON.stringify(cart)); } catch (e) {}
+    
+    // Warn when leaving with items in cart
+    const handleBeforeUnload = (e) => {
+      if (cart.length > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [cart]);
+
+  // Handle Mobile Back Button for Exit Confirmation
+  useEffect(() => {
+    const handlePopState = (e) => {
+      // If we are at the root path and trying to go back
+      if (window.location.pathname === '/' || window.location.pathname === '/home') {
+        if (window.confirm('Do you want to exit FoodHaven?')) {
+          // Allow exit (by not doing anything, browser will handle it)
+        } else {
+          // Stay on site by pushing the current state back
+          window.history.pushState(null, '', window.location.pathname);
+        }
+      }
+    };
+
+    // Push an initial state so we have something to "pop"
+    window.history.pushState(null, '', window.location.pathname);
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const login = (token, userData) => {
     try {

@@ -55,11 +55,20 @@ function Layout({ user, cartCount, logout, children }) {
           {user && <Link to="/orders" style={isActive('/orders') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>My Orders</Link>}
           {user ? (
             <>
-              <Link to="/profile" style={isActive('/profile') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>Profile</Link>
+              <Link to="/profile" style={isActive('/profile') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>👤 Profile</Link>
               {String(user.role).toLowerCase() === 'admin' && (
-                <Link to="/admin" style={isActive('/admin') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>⚙️ Admin</Link>
+                <Link to="/admin" style={isActive('/admin') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>⚙️ Admin Panel</Link>
               )}
-              <button className="button-link logout-btn" onClick={logout}>Logout</button>
+              <button 
+                className="button-link logout-btn" 
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to logout?')) {
+                    logout();
+                  }
+                }}
+              >
+                🚪 Logout
+              </button>
             </>
           ) : (
             <>
