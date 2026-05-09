@@ -71,11 +71,23 @@ function AdminDashboard() {
     try {
       const form = new FormData();
       form.append('image', imageFile);
+      
+      // Try normal upload first
       const response = await api.post('/menu/upload', form);
       return response.data.imageUrl;
     } catch (error) {
-      const errorMsg = error.response?.data?.message || 'Upload failed.';
-      throw new Error(`IMAGE ERROR: ${errorMsg}`);
+      console.error('Upload Error:', error);
+      const serverMsg = error.response?.data?.message || 'Unknown server error';
+      const status = error.response?.status;
+      
+      // ALERT FOR DEBUGGING
+      alert(`UPLOAD FAILED!\nStatus: ${status}\nMessage: ${serverMsg}\nURL: ${api.defaults.baseURL}/menu/upload`);
+      
+      if (status === 401 || status === 403) {
+        alert('AUTH ERROR: Redirecting to login might be needed, or token is expired.');
+      }
+      
+      throw new Error(`IMAGE ERROR: ${serverMsg}`);
     }
   };
 
