@@ -68,27 +68,16 @@ function AdminDashboard() {
 
   const uploadImage = async () => {
     if (!imageFile) return formData.imageUrl || '';
-    try {
-      const form = new FormData();
-      form.append('image', imageFile);
-      
-      // Try normal upload first
-      const response = await api.post('/menu/upload', form);
-      return response.data.imageUrl;
-    } catch (error) {
-      console.error('Upload Error:', error);
-      const serverMsg = error.response?.data?.message || 'Unknown server error';
-      const status = error.response?.status;
-      
-      // ALERT FOR DEBUGGING
-      alert(`UPLOAD FAILED!\nStatus: ${status}\nMessage: ${serverMsg}\nURL: ${api.defaults.baseURL}/menu/upload`);
-      
-      if (status === 401 || status === 403) {
-        alert('AUTH ERROR: Redirecting to login might be needed, or token is expired.');
-      }
-      
-      throw new Error(`IMAGE ERROR: ${serverMsg}`);
-    }
+    
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(imageFile);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => {
+        alert('Local Image Processing Failed');
+        reject(error);
+      };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -96,8 +85,11 @@ function AdminDashboard() {
     setLoading(true);
     setMessage('');
     try {
-      const imageUrl = await uploadImage();
-      const payload = { ...formData, imageUrl };
+      // Step 1: Get Base64 image string (No server upload needed yet)
+      const base64Image = await uploadImage();
+      
+      // Step 2: Send everything in one payload to the database
+      const payload = { ...formData, imageUrl: base64Image };
       
       if (editingId) {
         await api.put(`/menu/${editingId}`, payload);
@@ -113,7 +105,10 @@ function AdminDashboard() {
       setImagePreview('');
       refreshAdminData();
     } catch (error) {
-      setMessage(`❌ ERROR: ${error.message}`);
+      console.error('Submit Error:', error);
+      const msg = error.response?.data?.message || error.message;
+      alert(`SUBMIT FAILED: ${msg}`);
+      setMessage(`❌ ERROR: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -146,15 +141,23 @@ function AdminDashboard() {
     if (!heroBgFile) return;
     setLoading(true);
     try {
-      const form = new FormData();
-      form.append('image', heroBgFile);
-      const response = await api.post('/settings/upload-hero', form);
-      setCurrentHeroBg(response.data.imageUrl);
+      const base64Hero = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(heroBgFile);
+        reader.onload = () => resolve(reader.result);
+      });
+
+      const response = await api.post('/settings', { 
+        key: 'heroBackgroundImage', 
+        value: base64Hero 
+      });
+      
+      setCurrentHeroBg(response.data.value);
       setMessage('✅ Hero background updated');
       setHeroBgFile(null);
       setHeroBgPreview('');
     } catch (error) {
-      setMessage(`❌ Hero upload failed: ${error.response?.data?.message}`);
+      alert(`Hero upload failed: ${error.message}`);
     } finally {
       setLoading(false);
     }
