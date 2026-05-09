@@ -19,21 +19,26 @@ router.get('/:id', async (req, res) => {
   res.json(item);
 });
 
-router.post('/upload', authMiddleware, adminMiddleware, upload.single('image'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: 'Image file is required' });
-  }
-  const imageUrl = `/uploads/${req.file.filename}`;
-  res.status(201).json({ imageUrl });
+router.post('/upload', authMiddleware, adminMiddleware, (req, res) => {
+  upload.single('image')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+    if (!req.file) {
+      return res.status(400).json({ message: 'Image file is required' });
+    }
+    const imageUrl = `/uploads/${req.file.filename}`;
+    res.status(201).json({ imageUrl });
+  });
 });
 
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const { title, description, price, category, imageUrl, available } = req.body;
+    const { title, description, price, category, imageUrl, available, prepTime } = req.body;
     if (!title || !price) {
       return res.status(400).json({ message: 'Title and price are required' });
     }
-    const item = await MenuItem.create({ title, description, price, category, imageUrl, available });
+    const item = await MenuItem.create({ title, description, price, category, imageUrl, available, prepTime });
     res.status(201).json(item);
   } catch (error) {
     console.error('Create menu item error:', error);

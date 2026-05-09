@@ -62,8 +62,9 @@ function App() {
     const handlePopState = (e) => {
       // If we are at the root path and trying to go back
       if (window.location.pathname === '/' || window.location.pathname === '/home') {
-        if (window.confirm('Do you want to exit FoodHaven?')) {
-          // Allow exit (by not doing anything, browser will handle it)
+        if (window.confirm('Do you want to exit and logout?')) {
+          logout();
+          // Allow exit
         } else {
           // Stay on site by pushing the current state back
           window.history.pushState(null, '', window.location.pathname);
@@ -76,7 +77,7 @@ function App() {
     window.addEventListener('popstate', handlePopState);
     
     return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  }, [user]); // Re-bind if user changes to ensure logout has correct closure
 
   const login = (token, userData) => {
     try {

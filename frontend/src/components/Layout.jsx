@@ -42,45 +42,51 @@ function Layout({ user, cartCount, logout, children }) {
           <button className="button-link theme-toggle" onClick={toggleTheme}>
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
-          <button className="menu-toggle" onClick={toggleMenu} aria-label="Toggle menu">
-            {isMenuOpen ? '✕' : '☰'}
+          <button className="menu-toggle" onClick={toggleMenu} aria-label="Open menu">
+            ☰
           </button>
         </div>
 
         <nav className={isMenuOpen ? 'nav-open' : ''}>
-          <Link to="/menu" style={isActive('/menu') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>Menu</Link>
-          <Link to="/order" style={isActive('/order') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>
-            🛒 Cart {cartCount > 0 && <span style={{ background: '#f97316', color: '#fff', borderRadius: '999px', padding: '0.1rem 0.5rem', fontSize: '0.75rem', marginLeft: '0.25rem' }}>{cartCount}</span>}
-          </Link>
-          {user && <Link to="/orders" style={isActive('/orders') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>My Orders</Link>}
-          {user ? (
-            <>
-              <Link to="/profile" style={isActive('/profile') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>👤 Profile</Link>
-              {String(user.role).toLowerCase() === 'admin' && (
-                <Link to="/admin" style={isActive('/admin') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>⚙️ Admin Panel</Link>
-              )}
-              <button 
-                className="button-link logout-btn" 
-                onClick={() => {
-                  if (window.confirm('Are you sure you want to logout?')) {
-                    logout();
-                  }
-                }}
-              >
-                🚪 Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" style={isActive('/login') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>Login</Link>
-              <Link to="/register" className="button primary register-btn">Register</Link>
-            </>
-          )}
+          <button className="menu-close" onClick={toggleMenu} aria-label="Close menu">✕</button>
+          <div className="nav-links">
+            <Link to="/" onClick={() => setIsMenuOpen(false)}>🏠 Home</Link>
+            <Link to="/menu" onClick={() => setIsMenuOpen(false)}>📋 Menu</Link>
+            <Link to="/order" onClick={() => setIsMenuOpen(false)}>
+              🛒 Cart {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+            </Link>
+            {user && <Link to="/orders" onClick={() => setIsMenuOpen(false)}>📦 My Orders</Link>}
+            {user ? (
+              <>
+                <Link to="/profile" onClick={() => setIsMenuOpen(false)}>👤 Profile</Link>
+                {String(user.role).toLowerCase() === 'admin' && (
+                  <Link to="/admin" onClick={() => setIsMenuOpen(false)}>⚙️ Admin Panel</Link>
+                )}
+                <button 
+                  className="button-link logout-btn" 
+                  style={{ fontSize: '1.4rem', marginTop: '1rem' }}
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to logout?')) {
+                      logout();
+                      setIsMenuOpen(false);
+                    }
+                  }}
+                >
+                  🚪 Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setIsMenuOpen(false)}>🔑 Login</Link>
+                <Link to="/register" className="button primary register-btn" onClick={() => setIsMenuOpen(false)}>✨ Register</Link>
+              </>
+            )}
+          </div>
         </nav>
       </header>
       <main>{children}</main>
       <footer className="footer">
-        <p>© 2026 FoodHaven Restaurant — Serving fresh local favorites with modern hospitality.</p>
+        <p>© 2026 FoodHaven Restaurant — Professional Culinary Excellence.</p>
       </footer>
     </div>
   );
