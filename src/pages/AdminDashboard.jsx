@@ -128,22 +128,30 @@ function AdminDashboard({ addToCart }) {
     try {
       setLoading(true);
       const imageUrl = await uploadImage();
-      const payload = { ...formData, price: Number(formData.price), imageUrl };
+      const payload = { 
+        ...formData, 
+        price: Number(String(formData.price).replace(/[^0-9.]/g, '')), 
+        imageUrl 
+      };
       
-      console.log('Saving item with payload:', payload);
+      console.log('Sending item to server:', payload);
 
       if (editingId) {
-        await api.put(`/menu/${editingId}`, payload);
+        const response = await api.put(`/menu/${editingId}`, payload);
         setMessage('✅ Menu item updated.');
+        setMenuItems(current => current.map(item => item._id === editingId ? response.data : item));
       } else {
-        await api.post('/menu', payload);
+        const response = await api.post('/menu', payload);
         setMessage('✅ Menu item added successfully.');
+        setMenuItems(current => [response.data, ...current]);
       }
       resetForm();
+      // Also refresh stats/orders
       await refreshAdminData();
     } catch (error) {
-      console.error('Submit item error:', error);
-      setMessage(error.response?.data?.message || error.message || '❌ Save failed. Check console for details.');
+      console.error('Submit item error details:', error);
+      const errorMsg = error.response?.data?.message || error.message || '❌ Save failed. Check your connection.';
+      setMessage(errorMsg);
     } finally { setLoading(false); }
   };
 
