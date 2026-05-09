@@ -30,6 +30,11 @@ function Menu({ addToCart }) {
                   <div>
                     <h3>{item.title}</h3>
                     <p className="category">{item.category}</p>
+                    {item.prepTime && (
+                      <div className="prep-time">
+                        <span>⏱️</span> {item.prepTime}
+                      </div>
+                    )}
                   </div>
                   <span className="price">Rs. {item.price.toLocaleString()}</span>
                 </div>

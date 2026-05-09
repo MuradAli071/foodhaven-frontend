@@ -8,6 +8,7 @@ const emptyForm = {
   price: '',
   category: '',
   imageUrl: '',
+  prepTime: '',
   available: true,
 };
 
@@ -25,6 +26,9 @@ function AdminDashboard({ addToCart }) {
   const [loading, setLoading] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState([]);
   const [orderFilter, setOrderFilter] = useState('All');
+  const [heroBgFile, setHeroBgFile] = useState(null);
+  const [heroBgPreview, setHeroBgPreview] = useState('');
+  const [currentHeroBg, setCurrentHeroBg] = useState('');
 
   useEffect(() => { 
     refreshAdminData(); 
@@ -51,16 +55,18 @@ function AdminDashboard({ addToCart }) {
     try {
       // Small delay to allow DB consistency in some cloud environments
       await new Promise(r => setTimeout(r, 800));
-      const [statsRes, ordersRes, usersRes, menuRes] = await Promise.all([
+      const [statsRes, ordersRes, usersRes, menuRes, settingsRes] = await Promise.all([
         api.get('/admin/stats'),
         api.get('/admin/orders'),
         api.get('/admin/users'),
         api.get('/admin/menu'),
+        api.get('/settings'),
       ]);
       setStats(statsRes.data);
       setOrders(ordersRes.data);
       setUsers(usersRes.data);
       setMenuItems(menuRes.data);
+      setCurrentHeroBg(settingsRes.data.heroBackgroundImage || '');
     } catch (error) {
       setMessage(error.response?.data?.message || 'Unable to load admin data');
     } finally {
@@ -88,6 +94,7 @@ function AdminDashboard({ addToCart }) {
       price: item.price, 
       category: item.category || '', 
       imageUrl: item.imageUrl || '', 
+      prepTime: item.prepTime || '',
       available: item.available,
     });
     setActiveTab('menu');
@@ -185,6 +192,29 @@ function AdminDashboard({ addToCart }) {
     }
   };
 
+  const handleHeroBgChange = (event) => {
+    const file = event.target.files[0];
+    if (file) { setHeroBgFile(file); setHeroBgPreview(URL.createObjectURL(file)); }
+  };
+
+  const handleHeroBgUpload = async () => {
+    if (!heroBgFile) return;
+    setLoading(true);
+    try {
+      const form = new FormData();
+      form.append('image', heroBgFile);
+      const response = await api.post('/settings/upload-hero', form);
+      setCurrentHeroBg(response.data.imageUrl);
+      setMessage('✅ Hero background updated successfully.');
+      setHeroBgFile(null);
+      setHeroBgPreview('');
+    } catch (error) {
+      setMessage(error.response?.data?.message || '❌ Background upload failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCancelOrder = async (orderId) => {
     if (!window.confirm('Cancel this order?')) return;
     try {
@@ -250,6 +280,7 @@ function AdminDashboard({ addToCart }) {
     { key: 'menu', label: '📋 Menu Management' },
     { key: 'orders', label: '📦 Orders', count: orders.length },
     { key: 'users', label: '👥 Users', count: users.length },
+    { key: 'settings', label: '⚙️ Site Settings' },
   ];
 
   return (
@@ -296,6 +327,7 @@ function AdminDashboard({ addToCart }) {
             <label>Title<input name="title" value={formData.title} onChange={handleInputChange} placeholder="e.g. Chicken Sandwich" required /></label>
             <label>Category<input name="category" value={formData.category} onChange={handleInputChange} placeholder="e.g. Burgers" required /></label>
             <label>Price (PKR)<input name="price" type="number" value={formData.price} onChange={handleInputChange} placeholder="999" step="1" required /></label>
+            <label>Preparation Time<input name="prepTime" value={formData.prepTime} onChange={handleInputChange} placeholder="e.g. 15-20 mins" /></label>
             <label>Description<textarea name="description" value={formData.description} onChange={handleInputChange} placeholder="Describe the dish..." /></label>
             <label>Image Upload<input type="file" accept="image/*" onChange={handleImageChange} /></label>
             {imagePreview && (
@@ -318,6 +350,7 @@ function AdminDashboard({ addToCart }) {
                   <div>
                     <h4 style={{ marginBottom: '0.3rem' }}>{item.title}</h4>
                     <p style={{ color: 'var(--muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.category}</p>
+                    {item.prepTime && <p style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>⏱️ {item.prepTime}</p>}
                     <p className="admin-item-description">{item.description}</p>
                     <p className="price" style={{ marginTop: '0.5rem' }}>Rs. {item.price.toLocaleString()}</p>
                     <span className={`badge ${item.available ? 'badge-available' : 'badge-unavailable'}`}>{item.available ? 'Available' : 'Unavailable'}</span>
@@ -469,6 +502,61 @@ function AdminDashboard({ addToCart }) {
           ) : (
             <p style={{ color: 'var(--text-secondary)' }}>No users found.</p>
           )}
+        </div>
+      )}
+
+      {/* ========== SITE SETTINGS ========== */}
+      {activeTab === 'settings' && (
+        <div className="admin-panel admin-settings-panel">
+          <div className="admin-panel-header">
+            <div>
+              <h3>⚙️ Site Settings</h3>
+              <p>Customize the look and feel of your FoodHaven website.</p>
+            </div>
+          </div>
+
+          <div className="form-card">
+            <h4>Hero Section Background</h4>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              Upload a high-quality image to show on the main homepage.
+            </p>
+            
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>Current Background:</p>
+              {currentHeroBg ? (
+                <img 
+                  src={currentHeroBg.startsWith('/') ? `${api.defaults.baseURL.replace('/api', '')}${currentHeroBg}` : currentHeroBg} 
+                  alt="Current Hero" 
+                  style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border)' }}
+                />
+              ) : (
+                <div style={{ width: '100%', height: '150px', background: 'var(--bg-secondary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)' }}>
+                  No custom background set
+                </div>
+              )}
+            </div>
+
+            <label>
+              Upload New Image
+              <input type="file" accept="image/*" onChange={handleHeroBgChange} />
+            </label>
+
+            {heroBgPreview && (
+              <div className="image-preview" style={{ marginTop: '1rem' }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Preview:</p>
+                <img src={heroBgPreview} alt="Hero Preview" style={{ width: '100%', height: '150px' }} />
+              </div>
+            )}
+
+            <button 
+              className="button primary" 
+              onClick={handleHeroBgUpload} 
+              disabled={loading || !heroBgFile}
+              style={{ marginTop: '1.5rem' }}
+            >
+              {loading ? 'Uploading...' : 'Update Hero Background'}
+            </button>
+          </div>
         </div>
       )}
     </section>
