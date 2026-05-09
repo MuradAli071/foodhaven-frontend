@@ -11,6 +11,8 @@ function Layout({ user, cartCount, logout, children }) {
     }
   });
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     try {
@@ -21,7 +23,13 @@ function Layout({ user, cartCount, logout, children }) {
   }, [theme]);
 
   const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  const toggleMenu = () => setIsMenuOpen((prev) => !prev);
   const isActive = (path) => location.pathname === path;
+
+  // Close menu when route changes
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
 
   return (
     <div className="app-shell">
@@ -29,10 +37,17 @@ function Layout({ user, cartCount, logout, children }) {
         <div className="brand">
           <Link to="/">🍽️ FoodHaven</Link>
         </div>
-        <nav>
-          <button className="button-link" onClick={toggleTheme} style={{ fontSize: '1.2rem', padding: '0.2rem 0.5rem' }}>
+        
+        <div className="topbar-actions">
+          <button className="button-link theme-toggle" onClick={toggleTheme}>
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
+          <button className="menu-toggle" onClick={toggleMenu} aria-label="Toggle menu">
+            {isMenuOpen ? '✕' : '☰'}
+          </button>
+        </div>
+
+        <nav className={isMenuOpen ? 'nav-open' : ''}>
           <Link to="/menu" style={isActive('/menu') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>Menu</Link>
           <Link to="/order" style={isActive('/order') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>
             🛒 Cart {cartCount > 0 && <span style={{ background: '#f97316', color: '#fff', borderRadius: '999px', padding: '0.1rem 0.5rem', fontSize: '0.75rem', marginLeft: '0.25rem' }}>{cartCount}</span>}
@@ -44,12 +59,12 @@ function Layout({ user, cartCount, logout, children }) {
               {String(user.role).toLowerCase() === 'admin' && (
                 <Link to="/admin" style={isActive('/admin') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>⚙️ Admin</Link>
               )}
-              <button className="button-link" onClick={logout} style={{ color: '#ef4444' }}>Logout</button>
+              <button className="button-link logout-btn" onClick={logout}>Logout</button>
             </>
           ) : (
             <>
               <Link to="/login" style={isActive('/login') ? { color: '#f97316', background: 'rgba(249,115,22,0.1)' } : {}}>Login</Link>
-              <Link to="/register" className="button primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>Register</Link>
+              <Link to="/register" className="button primary register-btn">Register</Link>
             </>
           )}
         </nav>
