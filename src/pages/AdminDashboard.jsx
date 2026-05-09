@@ -124,37 +124,45 @@ function AdminDashboard({ addToCart }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!formData.title || !formData.category || !formData.price) {
-      setMessage('⚠️ Title, category, and price are required.');
+      setMessage('⚠️ Please provide a title, category, and valid price.');
       return;
     }
+    
+    setLoading(true);
+    const originalMenuItems = [...menuItems];
+    
     try {
-      setLoading(true);
       const imageUrl = await uploadImage();
-      const payload = { 
-        ...formData, 
-        price: Number(String(formData.price).replace(/[^0-9.]/g, '')), 
-        imageUrl 
-      };
+      const sanitizedPrice = Number(String(formData.price).replace(/[^0-9.]/g, ''));
+      const payload = { ...formData, price: sanitizedPrice, imageUrl };
       
-      console.log('Sending item to server:', payload);
+      // Optimistic UI update for better feel
+      if (!editingId) {
+        const tempId = Date.now().toString();
+        setMenuItems(prev => [{ ...payload, _id: tempId, isOptimistic: true }, ...prev]);
+      }
 
       if (editingId) {
         const response = await api.put(`/menu/${editingId}`, payload);
-        setMessage('✅ Menu item updated.');
+        setMessage('✅ Menu item updated successfully.');
         setMenuItems(current => current.map(item => item._id === editingId ? response.data : item));
       } else {
         const response = await api.post('/menu', payload);
-        setMessage('✅ Menu item added successfully.');
-        setMenuItems(current => [response.data, ...current]);
+        setMessage('✅ Menu item added to the menu.');
+        setMenuItems(current => [response.data, ...current.filter(i => !i.isOptimistic)]);
       }
+      
       resetForm();
-      // Also refresh stats/orders
-      await refreshAdminData();
+      // Sync other dashboard data in background
+      refreshAdminData();
     } catch (error) {
-      console.error('Submit item error details:', error);
-      const errorMsg = error.response?.data?.message || error.message || '❌ Save failed. Check your connection.';
+      console.error('Submission Error:', error);
+      setMenuItems(originalMenuItems); // Rollback on error
+      const errorMsg = error.response?.data?.message || error.message || '❌ Could not save. Please check your connection and try again.';
       setMessage(errorMsg);
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOrderStatusChange = async (orderId, newStatus) => {
