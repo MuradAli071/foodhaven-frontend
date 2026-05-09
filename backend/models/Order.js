@@ -9,7 +9,7 @@ const orderSchema = new mongoose.Schema({
     },
   ],
   total: { type: Number, required: true },
-  status: { type: String, enum: ['Pending', 'Preparing', 'Ready', 'Delivered', 'Cancelled'], default: 'Pending' },
+  status: { type: String, enum: ['Pending', 'Preparing', 'Ready', 'On The Way', 'Delivered', 'Cancelled'], default: 'Pending' },
   paymentStatus: { type: String, enum: ['Pending', 'Paid', 'Failed'], default: 'Pending' },
   paymentMethod: { type: String, enum: ['Cash', 'Card', 'Online'], default: 'Cash' },
   deliveryAddress: { type: String, required: true },

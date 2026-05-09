@@ -5,7 +5,11 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('foodhavenToken');
+  let token = null;
+  try {
+    token = localStorage.getItem('foodhavenToken');
+  } catch (e) {}
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

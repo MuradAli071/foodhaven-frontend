@@ -8,7 +8,8 @@ const upload = require('../config/multer');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
-  const items = await MenuItem.find({ available: true }).sort({ category: 1, title: 1 });
+  const items = await MenuItem.find({ available: true })
+    .sort({ category: 1, title: 1 });
   res.json(items);
 });
 
@@ -39,9 +40,14 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 });
 
 router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
-  const item = await MenuItem.findByIdAndDelete(req.params.id);
-  if (!item) return res.status(404).json({ message: 'Menu item not found' });
-  res.json({ message: 'Menu item deleted' });
+  try {
+    const item = await MenuItem.findByIdAndDelete(req.params.id);
+    if (!item) return res.status(404).json({ message: 'Menu item not found' });
+    res.json({ message: 'Menu item deleted' });
+  } catch (error) {
+    console.error('Delete menu item error:', error);
+    res.status(500).json({ message: 'Failed to delete menu item. It might be in use.' });
+  }
 });
 
 module.exports = router;

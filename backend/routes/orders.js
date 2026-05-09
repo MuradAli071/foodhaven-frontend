@@ -29,6 +29,17 @@ router.post('/', authMiddleware, async (req, res) => {
     deliveryAddress,
     paymentMethod: paymentMethod || 'Cash',
   });
+  
+  // Populate for emitting
+  const populatedOrder = await Order.findById(order._id)
+    .populate('customer', 'name email')
+    .populate('items.menuItem', 'title price category imageUrl');
+
+  const io = req.app.get('io');
+  if (io) {
+    io.emit('newOrder', populatedOrder);
+  }
+
   res.status(201).json(order);
 });
 
@@ -52,8 +63,16 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 router.put('/:id/status', authMiddleware, adminMiddleware, async (req, res) => {
-  const order = await Order.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
+  const order = await Order.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true })
+    .populate('customer', 'name email')
+    .populate('items.menuItem', 'title price category imageUrl');
   if (!order) return res.status(404).json({ message: 'Order not found' });
+  
+  const io = req.app.get('io');
+  if (io) {
+    io.emit('orderStatusUpdated', order);
+  }
+
   res.json(order);
 });
 

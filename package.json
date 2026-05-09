@@ -1,0 +1,11 @@
+{
+  "name": "foodhaven",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install-frontend": "cd frontend && npm install",
+    "install-backend": "cd backend && npm install",
+    "build-frontend": "cd frontend && npm install && npm run build",
+    "vercel-build": "npm run build-frontend"
+  }
+}

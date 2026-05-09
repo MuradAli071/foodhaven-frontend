@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/api';
+import { io } from 'socket.io-client';
 
 const emptyForm = {
   title: '',
@@ -25,7 +26,18 @@ function AdminDashboard({ addToCart }) {
   const [selectedOrders, setSelectedOrders] = useState([]);
   const [orderFilter, setOrderFilter] = useState('All');
 
-  useEffect(() => { refreshAdminData(); }, []);
+  useEffect(() => { 
+    refreshAdminData(); 
+    
+    // Socket connection
+    const socket = io();
+    socket.on('newOrder', (order) => {
+      setOrders(prev => [order, ...prev]);
+      setMessage(`🔔 New order received: #${order._id.slice(-6).toUpperCase()}`);
+    });
+    
+    return () => socket.disconnect();
+  }, []);
 
   useEffect(() => {
     if (message) {
@@ -68,7 +80,14 @@ function AdminDashboard({ addToCart }) {
 
   const handleEditItem = (item) => {
     setEditingId(item._id);
-    setFormData({ title: item.title, description: item.description || '', price: item.price, category: item.category || '', imageUrl: item.imageUrl || '', available: item.available });
+    setFormData({ 
+      title: item.title, 
+      description: item.description || '', 
+      price: item.price, 
+      category: item.category || '', 
+      imageUrl: item.imageUrl || '', 
+      available: item.available,
+    });
     setActiveTab('menu');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -78,10 +97,12 @@ function AdminDashboard({ addToCart }) {
     try {
       setLoading(true);
       await api.delete(`/menu/${itemId}`);
-      setMessage('✅ Menu item deleted.');
-      await refreshAdminData();
+      setMenuItems((current) => current.filter((item) => item._id !== itemId));
+      setMessage('✅ Menu item deleted successfully.');
+      refreshAdminData();
     } catch (error) {
-      setMessage(error.response?.data?.message || '❌ Failed to delete.');
+      console.error('Delete error:', error);
+      setMessage(error.response?.data?.message || '❌ Failed to delete. This item might be referenced elsewhere.');
     } finally { setLoading(false); }
   };
 
@@ -190,7 +211,7 @@ function AdminDashboard({ addToCart }) {
   };
 
   const getStatusClass = (status) => {
-    const m = { Pending: 'status-pending', Preparing: 'status-preparing', Ready: 'status-ready', Delivered: 'status-delivered', Cancelled: 'status-cancelled' };
+    const m = { Pending: 'status-pending', Preparing: 'status-preparing', Ready: 'status-ready', 'On The Way': 'status-on-the-way', Delivered: 'status-delivered', Cancelled: 'status-cancelled' };
     return `status-badge ${m[status] || ''}`;
   };
   const getPaymentClass = (status) => {
@@ -293,7 +314,7 @@ function AdminDashboard({ addToCart }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
             <h3 style={{ margin: 0 }}>📦 Order Management ({filteredOrders.length})</h3>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {['All', 'Pending', 'Preparing', 'Ready', 'Delivered', 'Cancelled'].map((f) => (
+              {['All', 'Pending', 'Preparing', 'Ready', 'On The Way', 'Delivered', 'Cancelled'].map((f) => (
                 <button key={f} className={`button ${orderFilter === f ? 'primary' : 'secondary'}`} style={{ padding: '0.4rem 0.9rem', fontSize: '0.78rem', borderRadius: '999px' }} onClick={() => setOrderFilter(f)}>{f}</button>
               ))}
             </div>
@@ -339,7 +360,7 @@ function AdminDashboard({ addToCart }) {
                     <div className="order-selects">
                       <label>Status
                         <select value={order.status} onChange={(e) => handleOrderStatusChange(order._id, e.target.value)}>
-                          {['Pending', 'Preparing', 'Ready', 'Delivered', 'Cancelled'].map((s) => <option key={s} value={s}>{s}</option>)}
+                          {['Pending', 'Preparing', 'Ready', 'On The Way', 'Delivered', 'Cancelled'].map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                       </label>
                       <label>Payment

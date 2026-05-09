@@ -72,9 +72,25 @@ function Order({ cart, removeFromCart, updateQuantity, placeOrder, loading }) {
                     navigator.geolocation.getCurrentPosition(
                       (position) => {
                         const { latitude, longitude } = position.coords;
-                        setAddress(`Lat: ${latitude}, Lng: ${longitude}`);
+                        setMessage('Fetching exact address...');
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+                          .then(res => res.json())
+                          .then(data => {
+                            if (data && data.display_name) {
+                              setAddress(data.display_name);
+                              setMessage('Address found!');
+                            } else {
+                              setAddress(`Lat: ${latitude}, Lng: ${longitude}`);
+                              setMessage('Could not resolve exact address.');
+                            }
+                          })
+                          .catch(() => {
+                            setAddress(`Lat: ${latitude}, Lng: ${longitude}`);
+                            setMessage('Failed to fetch address. Using coordinates.');
+                          });
                       },
-                      (error) => setMessage('Unable to get location: ' + error.message)
+                      (error) => setMessage('Unable to get location: ' + error.message),
+                      { enableHighAccuracy: true }
                     );
                   } else {
                     setMessage('Geolocation not supported.');

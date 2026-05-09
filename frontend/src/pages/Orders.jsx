@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/api';
+import { io } from 'socket.io-client';
 
 function Orders() {
   const [orders, setOrders] = useState([]);
@@ -17,10 +18,17 @@ function Orders() {
       }
     };
     fetchOrders();
+
+    const socket = io();
+    socket.on('orderStatusUpdated', (updatedOrder) => {
+      setOrders(current => current.map(o => o._id === updatedOrder._id ? updatedOrder : o));
+    });
+
+    return () => socket.disconnect();
   }, []);
 
   const getStatusClass = (status) => {
-    const map = { Pending: 'status-pending', Preparing: 'status-preparing', Ready: 'status-ready', Delivered: 'status-delivered', Cancelled: 'status-cancelled' };
+    const map = { Pending: 'status-pending', Preparing: 'status-preparing', Ready: 'status-ready', 'On The Way': 'status-on-the-way', Delivered: 'status-delivered', Cancelled: 'status-cancelled' };
     return `status-badge ${map[status] || ''}`;
   };
 

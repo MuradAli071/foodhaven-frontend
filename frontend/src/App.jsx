@@ -14,43 +14,53 @@ import NotFound from './pages/NotFound';
 
 function App() {
   const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem('foodhavenUser');
-    return stored ? JSON.parse(stored) : null;
+    try {
+      const stored = localStorage.getItem('foodhavenUser');
+      return stored ? JSON.parse(stored) : null;
+    } catch { return null; }
   });
   const [cart, setCart] = useState(() => {
-    const stored = localStorage.getItem('foodhavenCart');
-    return stored ? JSON.parse(stored) : [];
+    try {
+      const stored = localStorage.getItem('foodhavenCart');
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
   });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('foodhavenToken');
-    if (token) {
-      api.get('/auth/me')
-        .then((response) => {
-          setUser(response.data.user);
-          localStorage.setItem('foodhavenUser', JSON.stringify(response.data.user));
-        })
-        .catch(() => {
-          logout();
-        });
-    }
+    try {
+      const token = localStorage.getItem('foodhavenToken');
+      if (token) {
+        api.get('/auth/me')
+          .then((response) => {
+            setUser(response.data.user);
+            try { localStorage.setItem('foodhavenUser', JSON.stringify(response.data.user)); } catch (e) {}
+          })
+          .catch(() => {
+            logout();
+          });
+      }
+    } catch (e) {}
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('foodhavenCart', JSON.stringify(cart));
+    try { localStorage.setItem('foodhavenCart', JSON.stringify(cart)); } catch (e) {}
   }, [cart]);
 
   const login = (token, userData) => {
-    localStorage.setItem('foodhavenToken', token);
-    localStorage.setItem('foodhavenUser', JSON.stringify(userData));
+    try {
+      localStorage.setItem('foodhavenToken', token);
+      localStorage.setItem('foodhavenUser', JSON.stringify(userData));
+    } catch (e) {}
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem('foodhavenToken');
-    localStorage.removeItem('foodhavenUser');
-    localStorage.removeItem('foodhavenCart');
+    try {
+      localStorage.removeItem('foodhavenToken');
+      localStorage.removeItem('foodhavenUser');
+      localStorage.removeItem('foodhavenCart');
+    } catch (e) {}
     setUser(null);
     setCart([]);
   };
