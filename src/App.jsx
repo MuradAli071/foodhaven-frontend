@@ -149,7 +149,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/menu" element={<Menu addToCart={addToCart} />} />
-          <Route path="/order" element={<Order cart={cart} removeFromCart={removeFromCart} updateQuantity={updateQuantity} placeOrder={placeOrder} loading={loading} />} />
+          <Route path="/order" element={<Order cart={cart} removeFromCart={removeFromCart} updateQuantity={updateQuantity} placeOrder={placeOrder} loading={loading} user={user} />} />
           <Route path="/orders" element={user ? <Orders /> : <Navigate to="/login" replace />} />
           <Route path="/login" element={<Login login={login} user={user} />} />
           <Route path="/register" element={<Register login={login} user={user} />} />
