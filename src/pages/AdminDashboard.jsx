@@ -49,6 +49,8 @@ function AdminDashboard({ addToCart }) {
   const refreshAdminData = async () => {
     setLoading(true);
     try {
+      // Small delay to allow DB consistency in some cloud environments
+      await new Promise(r => setTimeout(r, 800));
       const [statsRes, ordersRes, usersRes, menuRes] = await Promise.all([
         api.get('/admin/stats'),
         api.get('/admin/orders'),
@@ -266,6 +268,7 @@ function AdminDashboard({ addToCart }) {
             {tab.label} {tab.count !== undefined && `(${tab.count})`}
           </button>
         ))}
+        <button className="button secondary" onClick={refreshAdminData} title="Sync data with server">🔄 Sync</button>
       </div>
 
       {message && <div className="status-message admin-status">{message}</div>}

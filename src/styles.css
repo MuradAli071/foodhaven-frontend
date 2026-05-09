@@ -120,6 +120,11 @@ nav a:hover, .button-link:hover {
 .logout-btn { color: var(--danger) !important; }
 .register-btn { padding: 0.5rem 1.25rem !important; font-size: 0.85rem !important; }
 
+.cart-badge {
+  background: var(--primary); color: #fff; border-radius: var(--radius-full); 
+  padding: 0.15rem 0.5rem; font-size: 0.75rem; margin-left: 0.35rem; font-weight: 700;
+}
+
 /* ==================== MAIN ==================== */
 main { flex: 1; padding: 2.5rem 2rem; }
 
