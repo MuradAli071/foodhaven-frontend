@@ -2,12 +2,15 @@ import { Link } from 'react-router-dom';
 
 function NotFound() {
   return (
-    <section className="section notfound-section">
+    <section className="form-section">
       <div className="page-header">
+        <div className="form-icon">🔍</div>
         <h2>404</h2>
-        <p>Page not found. Return to the homepage to continue ordering.</p>
+        <p>Page not found. The page you're looking for doesn't exist.</p>
       </div>
-      <Link className="button primary" to="/">Go Home</Link>
+      <Link className="btn-premium" to="/" style={{ position: 'relative', zIndex: 1, marginTop: '1rem' }}>
+        Back to Home
+      </Link>
     </section>
   );
 }
