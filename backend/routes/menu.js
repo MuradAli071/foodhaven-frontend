@@ -19,14 +19,37 @@ router.get('/:id', async (req, res) => {
   res.json(item);
 });
 
-router.post('/upload', authMiddleware, adminMiddleware, (req, res) => {
+// TEST ROUTE: Public upload without auth (FOR DEBUGGING ONLY)
+router.post('/test-upload', (req, res) => {
+  console.log('[DEBUG] Test upload received');
   upload.single('image')(req, res, (err) => {
     if (err) {
-      return res.status(400).json({ message: err.message });
+      console.error('[DEBUG Error]', err.message);
+      return res.status(400).json({ message: `DEBUG: ${err.message}` });
     }
     if (!req.file) {
-      return res.status(400).json({ message: 'Image file is required' });
+      console.error('[DEBUG Error] No file');
+      return res.status(400).json({ message: 'DEBUG: No file received' });
     }
+    console.log('[DEBUG Success]', req.file.filename);
+    res.json({ imageUrl: `/uploads/${req.file.filename}` });
+  });
+});
+
+router.post('/upload', authMiddleware, adminMiddleware, (req, res) => {
+  console.log('[Upload] Request reached menu/upload');
+  upload.single('image')(req, res, function (err) {
+    if (err) {
+      console.error('[Upload Error Logic]', err.message);
+      return res.status(400).json({ message: err.message });
+    }
+
+    if (!req.file) {
+      console.error('[Upload Error Logic] No file');
+      return res.status(400).json({ message: 'No file received.' });
+    }
+
+    console.log('[Upload Success Logic]', req.file.filename);
     const imageUrl = `/uploads/${req.file.filename}`;
     res.status(201).json({ imageUrl });
   });
